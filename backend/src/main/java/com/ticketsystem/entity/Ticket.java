@@ -2,117 +2,66 @@ package com.ticketsystem.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "tickets", indexes = {
-    @Index(name = "idx_ticket_number", columnList = "ticket_number"),
-    @Index(name = "idx_ticket_status", columnList = "current_status"),
-    @Index(name = "idx_ticket_priority", columnList = "priority"),
-    @Index(name = "idx_ticket_created_at", columnList = "created_at")
-})
+@Table(name = "tickets")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ticket_number", nullable = false, unique = true, length = 20)
+    @Column(name = "ticket_number", unique = true, nullable = false)
     private String ticketNumber;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
     @Column(name = "issue_description", nullable = false, columnDefinition = "TEXT")
     private String issueDescription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Project project;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assigned_employee_id")
+    private Employee assignedEmployee;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private User assignedTo;
+    @Column(name = "support_level")
+    private String supportLevel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private User createdBy;
+    @Column(name = "priority")
+    private String priority;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "support_level", nullable = false)
-    private SupportLevel supportLevel;
+    @Column(name = "generation_datetime")
+    private LocalDateTime generationDatetime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Priority priority;
+    @Column(name = "response_datetime")
+    private LocalDateTime responseDatetime;
 
-    @Column(name = "generation_date_time", nullable = false)
-    private LocalDateTime generationDateTime;
+    @Column(name = "resolution_time")
+    private String resolutionTime;
 
-    @Column(name = "response_date_time")
-    private LocalDateTime responseDateTime;
-
-    @Column(name = "resolution_date_time")
-    private LocalDateTime resolutionDateTime;
-
-    @Column(name = "resolution_time_minutes")
-    private Long resolutionTimeMinutes;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "current_status", nullable = false)
-    @Builder.Default
-    private TicketStatus currentStatus = TicketStatus.OPEN;
+    @Column(name = "current_status")
+    private String currentStatus;
 
     @Column(name = "resolution_details", columnDefinition = "TEXT")
     private String resolutionDetails;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "remarks", columnDefinition = "TEXT")
     private String remarks;
 
-    @Column(name = "sla_breached")
-    @Builder.Default
-    private Boolean slaBreached = false;
-
-    @Column(name = "sla_due_date_time")
-    private LocalDateTime slaDueDateTime;
-
-    @CreatedDate
+    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @Builder.Default
-    private List<TicketComment> comments = new ArrayList<>();
-
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @Builder.Default
-    private List<TicketHistory> history = new ArrayList<>();
-
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @Builder.Default
-    private List<Attachment> attachments = new ArrayList<>();
 }

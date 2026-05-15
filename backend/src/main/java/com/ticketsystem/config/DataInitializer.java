@@ -1,139 +1,156 @@
 package com.ticketsystem.config;
 
-import com.ticketsystem.entity.*;
-import com.ticketsystem.repository.*;
+import com.ticketsystem.entity.Employee;
+import com.ticketsystem.entity.Project;
+import com.ticketsystem.entity.Ticket;
+import com.ticketsystem.repository.EmployeeRepository;
+import com.ticketsystem.repository.ProjectRepository;
+import com.ticketsystem.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
 
-    private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final EmployeeRepository employeeRepository;
     private final TicketRepository ticketRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
-        if (userRepository.count() > 0) {
-            log.info("Data already initialized, skipping...");
+        if (projectRepository.count() > 0) {
+            log.info("Sample data already present — skipping seed.");
             return;
         }
 
-        log.info("Initializing sample data...");
+        log.info("Seeding initial data...");
 
-        // Create admin user
-        User admin = userRepository.save(User.builder()
-                .username("admin").email("admin@company.com")
-                .password(passwordEncoder.encode("admin123"))
-                .fullName("System Administrator").department("IT")
-                .role(Role.ADMIN).isActive(true).build());
+        // Projects
+        List<Project> projects = projectRepository.saveAll(List.of(
+                Project.builder().projectName("HR Portal").build(),
+                Project.builder().projectName("ERP System").build(),
+                Project.builder().projectName("Telemedicine").build(),
+                Project.builder().projectName("Payroll System").build(),
+                Project.builder().projectName("Inventory Management").build()
+        ));
 
-        // Create support engineers
-        User eng1 = userRepository.save(User.builder()
-                .username("john.doe").email("john.doe@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .fullName("John Doe").department("IT Support")
-                .role(Role.SUPPORT_ENGINEER).isActive(true).build());
+        // Employees
+        List<Employee> employees = employeeRepository.saveAll(List.of(
+                Employee.builder().employeeName("John.D").supportLevel("L1").build(),
+                Employee.builder().employeeName("Smith.K").supportLevel("L2").build(),
+                Employee.builder().employeeName("David.R").supportLevel("L3").build(),
+                Employee.builder().employeeName("Maria.T").supportLevel("L1").build(),
+                Employee.builder().employeeName("Alex.P").supportLevel("L2").build(),
+                Employee.builder().employeeName("Chen.W").supportLevel("L3").build()
+        ));
 
-        User eng2 = userRepository.save(User.builder()
-                .username("jane.smith").email("jane.smith@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .fullName("Jane Smith").department("IT Support")
-                .role(Role.SUPPORT_ENGINEER).isActive(true).build());
-
-        User eng3 = userRepository.save(User.builder()
-                .username("mike.johnson").email("mike.johnson@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .fullName("Mike Johnson").department("IT Support")
-                .role(Role.SUPPORT_ENGINEER).isActive(true).build());
-
-        // Create employees
-        User emp1 = userRepository.save(User.builder()
-                .username("alice.brown").email("alice.brown@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .fullName("Alice Brown").department("HR")
-                .role(Role.EMPLOYEE).isActive(true).build());
-
-        User emp2 = userRepository.save(User.builder()
-                .username("bob.wilson").email("bob.wilson@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .fullName("Bob Wilson").department("Finance")
-                .role(Role.EMPLOYEE).isActive(true).build());
-
-        // Create projects
-        Project hrPortal = projectRepository.save(Project.builder()
-                .name("HR Portal").description("Human Resources Management System")
-                .projectCode("HRP").isActive(true).build());
-
-        Project erpSystem = projectRepository.save(Project.builder()
-                .name("ERP System").description("Enterprise Resource Planning")
-                .projectCode("ERP").isActive(true).build());
-
-        Project telemedicine = projectRepository.save(Project.builder()
-                .name("Telemedicine").description("Telemedicine Platform")
-                .projectCode("TLM").isActive(true).build());
-
-        Project inventory = projectRepository.save(Project.builder()
-                .name("Inventory Management").description("Warehouse and Inventory System")
-                .projectCode("INV").isActive(true).build());
-
-        Project payroll = projectRepository.save(Project.builder()
-                .name("Payroll System").description("Payroll Processing System")
-                .projectCode("PAY").isActive(true).build());
-
-        // Create sample tickets
+        // Tickets
         LocalDateTime now = LocalDateTime.now();
-        createTicket("INC-9001", hrPortal, emp1, eng1, Priority.P1_CRITICAL, TicketStatus.OPEN,
-                SupportLevel.L1, "Unable to login to HR portal. Getting 403 error on the login screen.", now.minusDays(2), admin);
-        createTicket("INC-9002", erpSystem, emp2, eng2, Priority.P2_HIGH, TicketStatus.IN_PROGRESS,
-                SupportLevel.L2, "ERP module crashing when generating quarterly reports.", now.minusDays(1), admin);
-        createTicket("INC-9003", telemedicine, emp1, eng3, Priority.P3_MEDIUM, TicketStatus.RESOLVED,
-                SupportLevel.L1, "Video call feature not working on Safari browser.", now.minusDays(5), emp1);
-        createTicket("INC-9004", inventory, emp2, null, Priority.P4_LOW, TicketStatus.OPEN,
-                SupportLevel.L1, "Barcode scanner driver needs update.", now.minusHours(3), emp2);
-        createTicket("INC-9005", payroll, emp1, eng1, Priority.P2_HIGH, TicketStatus.ON_HOLD,
-                SupportLevel.L3, "Payroll calculation incorrect for employees with overtime.", now.minusDays(3), admin);
-        createTicket("INC-9006", hrPortal, emp2, eng2, Priority.P1_CRITICAL, TicketStatus.CLOSED,
-                SupportLevel.L2, "Database connection pool exhausted causing downtime.", now.minusDays(7), admin);
-        createTicket("INC-9007", erpSystem, emp1, eng3, Priority.P3_MEDIUM, TicketStatus.IN_PROGRESS,
-                SupportLevel.L2, "PDF export feature generating blank pages intermittently.", now.minusHours(8), emp1);
-        createTicket("INC-9008", telemedicine, emp2, eng1, Priority.P2_HIGH, TicketStatus.REOPENED,
-                SupportLevel.L2, "Appointment booking not sending email confirmations.", now.minusDays(4), emp2);
 
-        log.info("Sample data initialized. Admin: admin/admin123, Support: john.doe/password123");
-    }
+        ticketRepository.saveAll(List.of(
+                Ticket.builder()
+                        .ticketNumber("INC-1001")
+                        .project(projects.get(0))
+                        .issueDescription("Unable to login to HR portal. Password reset not working for multiple users.")
+                        .assignedEmployee(employees.get(0))
+                        .supportLevel("L1").priority("P2 - High")
+                        .generationDatetime(now.minusDays(3))
+                        .responseDatetime(now.minusDays(2))
+                        .resolutionTime("24h 0m")
+                        .currentStatus("Resolved")
+                        .resolutionDetails("Reset password policy updated and users notified.")
+                        .remarks("Affected 15 users in HR department")
+                        .build(),
 
-    private void createTicket(String ticketNumber, Project project, User createdBy, User assignedTo,
-                               Priority priority, TicketStatus status, SupportLevel level,
-                               String description, LocalDateTime createdAt, User updatedBy) {
-        LocalDateTime sla = switch (priority) {
-            case P1_CRITICAL -> createdAt.plusHours(4);
-            case P2_HIGH -> createdAt.plusHours(8);
-            case P3_MEDIUM -> createdAt.plusHours(24);
-            case P4_LOW -> createdAt.plusHours(72);
-        };
+                Ticket.builder()
+                        .ticketNumber("INC-1002")
+                        .project(projects.get(1))
+                        .issueDescription("ERP module crashing on report generation. Error occurs for reports with more than 500 rows.")
+                        .assignedEmployee(employees.get(2))
+                        .supportLevel("L3").priority("P1 - Critical")
+                        .generationDatetime(now.minusDays(2))
+                        .currentStatus("In Progress")
+                        .remarks("Critical for month-end closing")
+                        .build(),
 
-        Ticket ticket = Ticket.builder()
-                .ticketNumber(ticketNumber).issueDescription(description)
-                .project(project).createdBy(createdBy).assignedTo(assignedTo)
-                .priority(priority).currentStatus(status).supportLevel(level)
-                .generationDateTime(createdAt).slaDueDateTime(sla)
-                .slaBreached(LocalDateTime.now().isAfter(sla) && status != TicketStatus.RESOLVED && status != TicketStatus.CLOSED)
-                .build();
+                Ticket.builder()
+                        .ticketNumber("INC-1003")
+                        .project(projects.get(2))
+                        .issueDescription("Video consultation feature not working on iOS devices. Patients unable to connect.")
+                        .assignedEmployee(employees.get(1))
+                        .supportLevel("L2").priority("P2 - High")
+                        .generationDatetime(now.minusDays(1))
+                        .currentStatus("Open")
+                        .remarks("Patients affected")
+                        .build(),
 
-        if (status == TicketStatus.RESOLVED || status == TicketStatus.CLOSED) {
-            ticket.setResolutionDateTime(createdAt.plusHours(6));
-            ticket.setResolutionTimeMinutes(360L);
-            ticket.setResolutionDetails("Issue has been investigated and resolved. Root cause identified and fix applied.");
-        }
-        ticketRepository.save(ticket);
+                Ticket.builder()
+                        .ticketNumber("INC-1004")
+                        .project(projects.get(3))
+                        .issueDescription("Salary slips not generating for contract employees this month.")
+                        .assignedEmployee(employees.get(1))
+                        .supportLevel("L2").priority("P1 - Critical")
+                        .generationDatetime(now.minusDays(5))
+                        .responseDatetime(now.minusDays(4))
+                        .resolutionTime("20h 30m")
+                        .currentStatus("Closed")
+                        .resolutionDetails("Payroll configuration updated for contract type employees.")
+                        .build(),
+
+                Ticket.builder()
+                        .ticketNumber("INC-1005")
+                        .project(projects.get(4))
+                        .issueDescription("Inventory stock count mismatch between warehouse system and physical count.")
+                        .assignedEmployee(employees.get(0))
+                        .supportLevel("L1").priority("P3 - Medium")
+                        .generationDatetime(now.minusHours(6))
+                        .currentStatus("Open")
+                        .remarks("Warehouse team flagged")
+                        .build(),
+
+                Ticket.builder()
+                        .ticketNumber("INC-1006")
+                        .project(projects.get(0))
+                        .issueDescription("Performance issue — employee search taking over 30 seconds to return results.")
+                        .assignedEmployee(employees.get(2))
+                        .supportLevel("L3").priority("P3 - Medium")
+                        .generationDatetime(now.minusDays(4))
+                        .responseDatetime(now.minusDays(3))
+                        .resolutionTime("18h 45m")
+                        .currentStatus("Resolved")
+                        .resolutionDetails("Database indexes optimized. Query time reduced to under 1 second.")
+                        .build(),
+
+                Ticket.builder()
+                        .ticketNumber("INC-1007")
+                        .project(projects.get(1))
+                        .issueDescription("Purchase order approval workflow stuck — email notifications not being sent to approvers.")
+                        .assignedEmployee(employees.get(1))
+                        .supportLevel("L2").priority("P2 - High")
+                        .generationDatetime(now.minusHours(12))
+                        .currentStatus("In Progress")
+                        .remarks("Finance team blocked")
+                        .build(),
+
+                Ticket.builder()
+                        .ticketNumber("INC-1008")
+                        .project(projects.get(2))
+                        .issueDescription("Patient data not syncing between mobile app and web portal after latest app update.")
+                        .assignedEmployee(employees.get(2))
+                        .supportLevel("L3").priority("P1 - Critical")
+                        .generationDatetime(now.minusHours(2))
+                        .currentStatus("On Hold")
+                        .remarks("Waiting for vendor response")
+                        .build()
+        ));
+
+        log.info("Seeded {} projects, {} employees, 8 tickets.", projects.size(), employees.size());
     }
 }

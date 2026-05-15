@@ -1,55 +1,45 @@
 package com.ticketsystem.controller;
 
-import com.ticketsystem.dto.request.ProjectRequest;
-import com.ticketsystem.dto.response.ApiResponse;
-import com.ticketsystem.dto.response.ProjectResponse;
-import com.ticketsystem.service.impl.ProjectServiceImpl;
+import com.ticketsystem.dto.ApiResponse;
+import com.ticketsystem.dto.ProjectDTO;
+import com.ticketsystem.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/projects")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private final ProjectServiceImpl projectService;
+    private final ProjectService projectService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProjectResponse>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success(projectService.getActiveProjects()));
-    }
-
-    @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<ProjectResponse>>> getAllIncludingInactive() {
-        return ResponseEntity.ok(ApiResponse.success(projectService.getAllProjects()));
+    public ResponseEntity<ApiResponse<List<ProjectDTO>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success("Projects fetched", projectService.getAllProjects()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectResponse>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(projectService.getProjectById(id)));
+    public ResponseEntity<ApiResponse<ProjectDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Project fetched", projectService.getProjectById(id)));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProjectResponse>> create(@Valid @RequestBody ProjectRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Project created", projectService.createProject(request)));
+    public ResponseEntity<ApiResponse<ProjectDTO>> create(@Valid @RequestBody ProjectDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Project created", projectService.createProject(dto)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProjectResponse>> update(
-            @PathVariable Long id, @Valid @RequestBody ProjectRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Project updated", projectService.updateProject(id, request)));
+    public ResponseEntity<ApiResponse<ProjectDTO>> update(@PathVariable Long id, @Valid @RequestBody ProjectDTO dto) {
+        return ResponseEntity.ok(ApiResponse.success("Project updated", projectService.updateProject(id, dto)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         projectService.deleteProject(id);
         return ResponseEntity.ok(ApiResponse.success("Project deleted", null));

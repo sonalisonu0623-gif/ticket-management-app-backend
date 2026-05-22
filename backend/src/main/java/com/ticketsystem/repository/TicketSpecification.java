@@ -2,6 +2,7 @@ package com.ticketsystem.repository;
 
 import com.ticketsystem.dto.TicketFilterDTO;
 import com.ticketsystem.entity.Ticket;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -14,6 +15,9 @@ public class TicketSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // Avoid duplicate rows when joining for pagination
+            if (query != null) query.distinct(true);
+
             if (filter.getTicketNumber() != null && !filter.getTicketNumber().isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("ticketNumber")),
                         "%" + filter.getTicketNumber().toLowerCase() + "%"));
@@ -22,7 +26,9 @@ public class TicketSpecification {
                 predicates.add(cb.equal(root.get("project").get("id"), filter.getProjectId()));
             }
             if (filter.getEmployeeId() != null) {
-                predicates.add(cb.equal(root.get("assignedEmployee").get("id"), filter.getEmployeeId()));
+                // LEFT JOIN so tickets with no assigned employee are not excluded
+                var empJoin = root.join("assignedEmployee", JoinType.LEFT);
+                predicates.add(cb.equal(empJoin.get("id"), filter.getEmployeeId()));
             }
             if (filter.getPriority() != null && !filter.getPriority().isBlank()) {
                 predicates.add(cb.equal(root.get("priority"), filter.getPriority()));

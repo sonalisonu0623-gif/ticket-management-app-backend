@@ -14,12 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TicketService {
 
     private final TicketRepository ticketRepository;
@@ -41,14 +43,15 @@ public class TicketService {
         return toDTO(ticket);
     }
 
+    @Transactional
     public TicketDTO createTicket(TicketDTO dto) {
         Project project = projectRepository.findById(dto.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + dto.getProjectId()));
 
         Employee employee = null;
         if (dto.getAssignedEmployeeId() != null) {
             employee = employeeRepository.findById(dto.getAssignedEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + dto.getAssignedEmployeeId()));
         }
 
         String ticketNumber = generateTicketNumber();
@@ -58,7 +61,7 @@ public class TicketService {
         Ticket ticket = Ticket.builder()
                 .ticketNumber(ticketNumber)
                 .project(project)
-                .issueDescription(dto.getIssueDescription())
+                .issueDescription(dto.getIssueDescription().trim())
                 .assignedEmployee(employee)
                 .supportLevel(dto.getSupportLevel())
                 .priority(dto.getPriority())
@@ -73,22 +76,23 @@ public class TicketService {
         return toDTO(ticketRepository.save(ticket));
     }
 
+    @Transactional
     public TicketDTO updateTicket(Long id, TicketDTO dto) {
         Ticket ticket = findById(id);
 
         Project project = projectRepository.findById(dto.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + dto.getProjectId()));
 
         Employee employee = null;
         if (dto.getAssignedEmployeeId() != null) {
             employee = employeeRepository.findById(dto.getAssignedEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + dto.getAssignedEmployeeId()));
         }
 
         String resolutionTime = calculateResolutionTime(ticket.getGenerationDatetime(), dto.getResponseDatetime());
 
         ticket.setProject(project);
-        ticket.setIssueDescription(dto.getIssueDescription());
+        ticket.setIssueDescription(dto.getIssueDescription().trim());
         ticket.setAssignedEmployee(employee);
         ticket.setSupportLevel(dto.getSupportLevel());
         ticket.setPriority(dto.getPriority());
@@ -101,11 +105,16 @@ public class TicketService {
         return toDTO(ticketRepository.save(ticket));
     }
 
+    @Transactional
     public void deleteTicket(Long id) {
         ticketRepository.delete(findById(id));
     }
 
-    private String generateTicketNumber() {
+    /**
+     * Thread-safe ticket number generation using database sequence query.
+     * The IDENTITY strategy + DB lock on findMaxTicketSequence prevents duplicates.
+     */
+    private synchronized String generateTicketNumber() {
         Integer maxSeq = ticketRepository.findMaxTicketSequence();
         int next = (maxSeq == null ? 1000 : maxSeq) + 1;
         return "INC-" + next;

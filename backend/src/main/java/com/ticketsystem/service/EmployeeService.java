@@ -6,12 +6,14 @@ import com.ticketsystem.exception.ResourceNotFoundException;
 import com.ticketsystem.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
@@ -26,21 +28,24 @@ public class EmployeeService {
         return toDTO(findById(id));
     }
 
+    @Transactional
     public EmployeeDTO createEmployee(EmployeeDTO dto) {
         Employee emp = Employee.builder()
-                .employeeName(dto.getEmployeeName())
+                .employeeName(dto.getEmployeeName().trim())
                 .supportLevel(dto.getSupportLevel())
                 .build();
         return toDTO(employeeRepository.save(emp));
     }
 
+    @Transactional
     public EmployeeDTO updateEmployee(Long id, EmployeeDTO dto) {
         Employee emp = findById(id);
-        emp.setEmployeeName(dto.getEmployeeName());
+        emp.setEmployeeName(dto.getEmployeeName().trim());
         emp.setSupportLevel(dto.getSupportLevel());
         return toDTO(employeeRepository.save(emp));
     }
 
+    @Transactional
     public void deleteEmployee(Long id) {
         employeeRepository.delete(findById(id));
     }

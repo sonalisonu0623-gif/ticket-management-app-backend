@@ -19,20 +19,28 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserDTO>> register(@Valid @RequestBody RegisterRequest request) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("User registered successfully", authService.registerUser(request)));
+                    .body(ApiResponse.success("User registered successfully",
+                            authService.registerUser(request)));
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.error(ex.getMessage()));
         }
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Authentication successful", authService.authenticateUser(request)));
+        try {
+            return ResponseEntity.ok(ApiResponse.success("Authentication successful",
+                    authService.authenticateUser(request)));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid credentials."));
+        }
     }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDTO>> getProfile() {
-        return ResponseEntity.ok(ApiResponse.success("Profile tracking context loaded", authService.getCurrentUser()));
+        return ResponseEntity.ok(ApiResponse.success("Profile loaded",
+                authService.getCurrentUser()));
     }
 }

@@ -1,16 +1,12 @@
 package com.ticketsystem.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class TicketDTO {
+
     private Long id;
     private String ticketNumber;
 
@@ -19,6 +15,7 @@ public class TicketDTO {
     private String projectName;
 
     @NotBlank(message = "Issue description is required")
+    @Size(min = 5, message = "Description must be at least 5 characters")
     private String issueDescription;
 
     private Long assignedEmployeeId;
@@ -30,10 +27,16 @@ public class TicketDTO {
     private LocalDateTime generationDatetime;
     private LocalDateTime responseDatetime;
     private String resolutionTime;
+    private Integer businessHoursElapsed;
 
     private String currentStatus;
     private String resolutionDetails;
     private String remarks;
+
+    /** Computed at response time – true when SLA window exceeded */
+    private Boolean slaBreached;
+    /** Remaining SLA hours; negative means overdue */
+    private Integer slaRemainingHours;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

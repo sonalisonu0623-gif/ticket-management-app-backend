@@ -2,7 +2,8 @@ package com.ticketsystem.dto;
 
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

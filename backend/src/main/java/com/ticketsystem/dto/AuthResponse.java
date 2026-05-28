@@ -1,9 +1,20 @@
 package com.ticketsystem.dto;
 
+import com.ticketsystem.entity.Role;
 import lombok.*;
 
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AuthResponse {
+
     private String token;
-    private UserDTO user;
+    private String tokenType;
+    private Long userId;
+    private String username;
+    private String email;
+    private Role role;
+    private Long employeeId;
 }

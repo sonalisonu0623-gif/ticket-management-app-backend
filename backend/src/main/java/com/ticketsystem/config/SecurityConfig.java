@@ -1,14 +1,18 @@
 package com.ticketsystem.config;
 
+import com.ticketsystem.security.EmployeeUserDetailsService;
+import com.ticketsystem.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +21,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService    userDetailsService;
-    private final CustomAuthenticationEntryPoint unauthorizedHandler;
-    private final JwtAuthenticationFilter     jwtAuthenticationFilter;
+    // Inject the concrete service — NOT the JwtAuthenticationFilter (that would recreate the cycle)
+    private final EmployeeUserDetailsService userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -31,37 +34,32 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
+
+    // JwtAuthenticationFilter is injected as a method parameter — Spring resolves it
+    // independently and there is no constructor-level cycle.
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthenticationFilter jwtFilter) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public
-                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Admin-only config endpoints (method-level @PreAuthorize also guards these)
-                .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/employees/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/tickets/**").hasRole("ADMIN")
-                .requestMatchers("/api/shifts/**").hasAnyRole("ADMIN", "PROJECT_MANAGER")
-                .requestMatchers("/api/sla-configs/**").hasAnyRole("ADMIN", "PROJECT_MANAGER")
-
-                // Dashboard & reports — any authenticated user
-                .requestMatchers("/api/dashboard/**").authenticated()
-
-                // All other API calls require authentication
+                .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
-            );
-
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

@@ -47,7 +47,7 @@ public class Ticket {
     private LocalDateTime responseDateTime;
 
     @Column(name = "resolution_time")
-    private LocalDateTime resolutionTime;
+    private String resolutionTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "current_status", nullable = false, length = 20)

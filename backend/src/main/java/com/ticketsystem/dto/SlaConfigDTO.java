@@ -1,15 +1,21 @@
 package com.ticketsystem.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
-import lombok.Data;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-@Data
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class SlaConfigDTO {
+
     private Long id;
-    @NotBlank private String priority;
-    @NotBlank private String supportLevel;
-    @Positive private double responseTimeHours;
-    @Positive private double resolutionTimeHours;
-    private boolean isActive;
+
+    @NotNull(message = "Project is required")
+    private Long projectId;
+    private String projectName;
+
+    @NotBlank(message = "Priority level is required")
+    private String priorityLevel;
+
+    @Min(1) private Integer responseTimeSla;
+    @Min(1) private Integer resolutionTimeSla;
+    @Min(1) private Integer escalationTimeSla;
 }

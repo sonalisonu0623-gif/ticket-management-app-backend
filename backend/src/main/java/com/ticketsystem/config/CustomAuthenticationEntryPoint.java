@@ -14,15 +14,18 @@ import java.io.IOException;
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-            throws IOException {
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         AuthenticationException authException) throws IOException {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        ApiResponse<Void> apiResponse = ApiResponse.error("Access unauthorized. Invalid or missing authentication signature.");
-        
-        ObjectMapper mapper = new ObjectMapper();
-        response.getWriter().write(mapper.writeValueAsString(apiResponse));
+        ApiResponse<Void> body = ApiResponse.error(
+                "Unauthorized: invalid or missing authentication token.");
+
+        response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }

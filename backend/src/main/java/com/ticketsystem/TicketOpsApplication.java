@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TicketManagementApplication {
+public class TicketOpsApplication {
     public static void main(String[] args) {
-        SpringApplication.run(TicketManagementApplication.class, args);
+        SpringApplication.run(TicketOpsApplication.class, args);
     }
 }

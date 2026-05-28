@@ -9,8 +9,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig {
 
-    // Set FRONTEND_URL env var in production to restrict CORS to your Vercel domain.
-    // Falls back to wildcard for local development.
     @Value("${app.cors.allowed-origins:*}")
     private String allowedOrigins;
 
@@ -19,11 +17,13 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                boolean wildcard = allowedOrigins.equals("*");
                 registry.addMapping("/api/**")
-                        .allowedOriginPatterns(allowedOrigins.equals("*") ? "*" : allowedOrigins)
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedOriginPatterns(wildcard ? "*" : allowedOrigins)
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(!allowedOrigins.equals("*"))
+                        .exposedHeaders("Authorization")
+                        .allowCredentials(!wildcard)
                         .maxAge(3600);
             }
         };

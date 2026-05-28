@@ -26,8 +26,15 @@ public class User {
     @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, length = 20)
+    /**
+     * Roles: ADMIN | PROJECT_MANAGER | L1_SUPPORT | L2_SUPPORT | L3_SUPPORT | USER
+     */
+    @Column(nullable = false, length = 30)
     private String role;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

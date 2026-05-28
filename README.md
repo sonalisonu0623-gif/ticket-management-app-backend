@@ -1,275 +1,305 @@
-[README.md](https://github.com/user-attachments/files/27791165/README.md)
-# TicketOps — Enterprise Ticket Management System
+# TicketOps Enterprise — Angular Frontend
 
-A full-stack ticket management application with a Spring Boot REST API backend and Angular 17 frontend featuring a premium dark enterprise UI.
-
----
-
-## Tech Stack
-
-| Layer     | Technology                              |
-|-----------|----------------------------------------|
-| Frontend  | Angular 17 (Standalone), Angular Material |
-| Backend   | Spring Boot 3.2, Spring Data JPA       |
-| Database  | MySQL 8.x                              |
-| Language  | Java 17, TypeScript                    |
-| ORM       | Hibernate via Spring Data JPA          |
+> **Enterprise-grade support ticketing system** built with Angular 18, standalone components, signals, Angular Material, and a custom dark theme. Modeled after Jira, ServiceNow, and Freshservice.
 
 ---
 
-## Project Structure
+## 🏗️ Architecture Overview
 
 ```
-ticket-system/
-├── backend/                          # Spring Boot application
-│   ├── pom.xml
-│   └── src/main/java/com/ticketsystem/
-│       ├── TicketManagementApplication.java
-│       ├── config/CorsConfig.java
-│       ├── entity/                   # JPA Entities
-│       │   ├── Project.java
-│       │   ├── Employee.java
-│       │   └── Ticket.java
-│       ├── dto/                      # Data Transfer Objects
-│       │   ├── ProjectDTO.java
-│       │   ├── EmployeeDTO.java
-│       │   ├── TicketDTO.java
-│       │   ├── TicketFilterDTO.java
-│       │   └── ApiResponse.java
-│       ├── repository/               # Spring Data Repositories
-│       │   ├── ProjectRepository.java
-│       │   ├── EmployeeRepository.java
-│       │   ├── TicketRepository.java
-│       │   └── TicketSpecification.java
-│       ├── service/                  # Business Logic
-│       │   ├── ProjectService.java
-│       │   ├── EmployeeService.java
-│       │   └── TicketService.java
-│       ├── controller/               # REST Controllers
-│       │   ├── ProjectController.java
-│       │   ├── EmployeeController.java
-│       │   └── TicketController.java
-│       └── exception/                # Error Handling
-│           ├── ResourceNotFoundException.java
-│           └── GlobalExceptionHandler.java
+src/
+├── app/
+│   ├── core/                         # Singleton services, guards, interceptors
+│   │   ├── guards/
+│   │   │   ├── auth.guard.ts         # JWT authentication gate
+│   │   │   ├── unauth.guard.ts       # Redirect logged-in users away from login
+│   │   │   └── role.guard.ts         # Admin + project-access guards
+│   │   ├── interceptors/
+│   │   │   ├── jwt.interceptor.ts    # Attaches Bearer token, handles 401/403
+│   │   │   └── loading.interceptor.ts # Global loading bar
+│   │   ├── models/
+│   │   │   └── models.ts             # All TypeScript interfaces and domain types
+│   │   └── services/
+│   │       ├── auth.service.ts       # Auth state via Angular Signals
+│   │       ├── project.service.ts    # Projects CRUD + assignment
+│   │       ├── employee.service.ts   # Employees CRUD
+│   │       ├── ticket.service.ts     # Tickets with filters + SLA
+│   │       ├── dashboard.service.ts  # Dashboard stats + trends
+│   │       ├── sla.service.ts        # Shifts + SLA configs + business-hours calc
+│   │       ├── report.service.ts     # Reports + CSV export
+│   │       ├── toast.service.ts      # Snackbar notifications
+│   │       └── loading.service.ts    # Loading state via signals
+│   │
+│   ├── layouts/
+│   │   └── main-layout/
+│   │       ├── main-layout.component.ts   # Shell: sidebar + navbar + content
+│   │       ├── sidebar/
+│   │       │   └── sidebar.component.ts   # Collapsible sidebar, RBAC nav items
+│   │       └── navbar/
+│   │           └── navbar.component.ts    # Top bar: project switcher + profile dropdown
+│   │
+│   ├── features/
+│   │   ├── auth/login/
+│   │   │   └── login.component.ts         # JWT login page
+│   │   ├── dashboard/
+│   │   │   └── dashboard.component.ts     # Project-specific KPI cards + charts
+│   │   ├── tickets/
+│   │   │   ├── ticket-list/               # Table with advanced filters + pagination
+│   │   │   ├── ticket-form/               # Create / Edit ticket form
+│   │   │   └── ticket-detail/             # Full detail + SLA timer + quick actions
+│   │   ├── config/
+│   │   │   ├── projects/                  # Project CRUD with modal
+│   │   │   ├── employees/                 # Employee CRUD + project assignment
+│   │   │   ├── project-auth/              # Authorization mapping
+│   │   │   ├── shifts/                    # Shift management + day picker
+│   │   │   └── sla/                       # SLA config per priority
+│   │   ├── reports/
+│   │   │   └── reports.component.ts       # Trends + SLA + employee perf tabs
+│   │   ├── profile/
+│   │   │   └── profile.component.ts       # User profile + password change
+│   │   └── errors/
+│   │       ├── forbidden.component.ts     # 403 page
+│   │       └── not-found.component.ts     # 404 page
+│   │
+│   ├── app.config.ts    # ApplicationConfig with providers
+│   ├── app.routes.ts    # Full lazy-loaded route tree
+│   └── app.component.ts # Root <router-outlet>
 │
-└── frontend/                         # Angular 17 application
-    ├── angular.json
-    ├── package.json
-    └── src/
-        ├── index.html
-        ├── main.ts
-        ├── styles.css                # Global dark theme
-        └── app/
-            ├── app.config.ts
-            ├── app.routes.ts
-            ├── app.component.ts
-            ├── models/models.ts      # TypeScript interfaces
-            ├── services/
-            │   ├── api.service.ts    # HTTP API calls
-            │   └── toast.service.ts  # Notifications
-            └── components/
-                ├── ticket-form/      # Create / Edit ticket
-                ├── ticket-list/      # Searchable ticket grid
-                └── ticket-detail/    # Ticket view page
+├── environments/
+│   ├── environment.ts       # Dev: http://localhost:8080/api
+│   └── environment.prod.ts  # Prod: /api (reverse proxy)
+│
+├── styles.css               # Global dark enterprise theme (CSS variables)
+└── index.html
 ```
 
 ---
 
-## Prerequisites
+## 🚀 Quick Start
 
-- **Java 17+** — https://adoptium.net/
-- **Maven 3.8+** — https://maven.apache.org/
-- **MySQL 8.x** — https://dev.mysql.com/downloads/
-- **Node.js 18+** — https://nodejs.org/
-- **Angular CLI 17** — `npm install -g @angular/cli@17`
+### Prerequisites
+- Node.js 20+
+- Angular CLI 18+
 
----
-
-## Setup Instructions
-
-### Step 1 — MySQL Database
-
-```sql
--- Run the schema file:
-mysql -u root -p < backend/src/main/resources/schema-and-data.sql
-
--- Or manually:
-CREATE DATABASE ticket_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE ticket_db;
--- (Tables auto-created by Hibernate on first run)
-```
-
-### Step 2 — Configure Database Credentials
-
-Edit `backend/src/main/resources/application.properties`:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/ticket_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-spring.datasource.username=root          # ← Your MySQL username
-spring.datasource.password=root          # ← Your MySQL password
-```
-
-### Step 3 — Start Backend
-
+### Install and run
 ```bash
-cd backend
-mvn clean install
-mvn spring-boot:run
-```
-
-Backend runs at: **http://localhost:8080**
-
-Verify it's working:
-```bash
-curl http://localhost:8080/api/projects
-```
-
-### Step 4 — Load Sample Data
-
-```bash
-mysql -u root -p ticket_db < backend/src/main/resources/schema-and-data.sql
-```
-
-This seeds:
-- 5 Projects (HR Portal, ERP System, Telemedicine, Payroll System, Inventory Management)
-- 6 Employees (John.D, Smith.K, David.R, Maria.T, Alex.P, Chen.W)
-- 8 sample tickets with various statuses and priorities
-
-### Step 5 — Start Frontend
-
-```bash
-cd frontend
 npm install
-ng serve
+ng serve --open
 ```
 
-Frontend runs at: **http://localhost:4200**
+App runs at `http://localhost:4200`
+
+### Build for production
+```bash
+ng build --configuration=production
+```
 
 ---
 
-## REST API Reference
+## 🔐 Authentication Flow
+
+1. `POST /api/auth/login` → returns `{ token, user }` (JWT + user metadata)
+2. Token stored in `localStorage` via `AuthService` (signal-based)
+3. `jwtInterceptor` attaches `Authorization: Bearer <token>` to every request
+4. `authGuard` protects all main routes; `unauthGuard` redirects logged-in users away from `/auth/login`
+5. 401 responses auto-logout; 403 responses redirect to `/forbidden`
+
+---
+
+## 🏢 Project-Wise Business Flow
+
+```
+ADMIN creates Projects  →  ADMIN creates Employees  →  ADMIN assigns Employees to Projects
+                                                               ↓
+                                             Employees log in and see ONLY assigned projects
+                                                               ↓
+                                             Project Switcher in navbar refreshes:
+                                             Dashboard / Tickets / Reports
+                                                               ↓
+                                             Tickets belong to a Project
+                                             Employees can only view/update project tickets
+```
+
+---
+
+## 👥 Role-Based Access Control
+
+| Role              | Dashboard | Tickets         | Config | Reports |
+|-------------------|-----------|-----------------|--------|---------|
+| `ADMIN`           | All       | All             | Full   | All     |
+| `PROJECT_MANAGER` | Own       | Assigned proj.  | None   | Own     |
+| `L1_SUPPORT`      | Own       | Assigned proj.  | None   | None    |
+| `L2_SUPPORT`      | Own       | Assigned proj.  | None   | None    |
+| `USER`            | Own       | Own tickets     | None   | None    |
+
+Guards used: `authGuard`, `adminGuard`, `projectAccessGuard`
+
+---
+
+## ⏱️ SLA & Business Hours Logic
+
+Resolution time is calculated in **business hours only**:
+
+```
+Shift: 09:00 → 18:00, Mon–Fri
+
+Ticket raised: Friday 17:00
+Resolved:      Monday 11:00
+
+Calculation:
+  Friday  17:00 → 18:00  =  1h
+  Monday  09:00 → 11:00  =  2h
+  ─────────────────────────────
+  Total business resolution = 3h
+```
+
+Frontend `SlaService.calculateBusinessHours()` implements this logic for display. The backend provides pre-calculated `businessResolutionHours` and `slaRemainingHours`.
+
+---
+
+## 🌐 API Base URL
+
+| Environment | Base URL                  |
+|-------------|---------------------------|
+| Development | `http://localhost:8080/api` |
+| Production  | `/api` (reverse proxy)     |
+
+Configure in `src/environments/environment.ts`.
+
+---
+
+## 📡 API Endpoints Expected
+
+### Auth
+| Method | Endpoint          | Description          |
+|--------|-------------------|----------------------|
+| POST   | `/auth/login`     | JWT login            |
+| POST   | `/auth/register`  | New user             |
+| GET    | `/auth/me`        | Current user info    |
 
 ### Projects
-
-| Method | Endpoint             | Description      |
-|--------|---------------------|------------------|
-| GET    | /api/projects        | Get all projects |
-| GET    | /api/projects/{id}   | Get by ID        |
-| POST   | /api/projects        | Create project   |
-| PUT    | /api/projects/{id}   | Update project   |
-| DELETE | /api/projects/{id}   | Delete project   |
+| Method | Endpoint                             | Description                |
+|--------|--------------------------------------|----------------------------|
+| GET    | `/projects/list`                     | All projects (flat list)   |
+| GET    | `/projects/my`                       | Projects for current user  |
+| GET    | `/projects`                          | Paginated project list     |
+| POST   | `/projects`                          | Create project             |
+| PUT    | `/projects/:id`                      | Update project             |
+| DELETE | `/projects/:id`                      | Delete project             |
+| PATCH  | `/projects/:id/toggle-status`        | Activate/Deactivate        |
+| GET    | `/projects/:id/employees`            | Get project employees      |
+| POST   | `/projects/:id/employees`            | Assign employees           |
+| DELETE | `/projects/:id/employees/:empId`     | Remove employee            |
+| GET    | `/projects/:id/authorizations`       | Get auth mappings          |
+| PUT    | `/projects/:id/authorizations/:empId`| Update role mapping        |
 
 ### Employees
-
-| Method | Endpoint              | Description       |
-|--------|----------------------|-------------------|
-| GET    | /api/employees        | Get all employees |
-| GET    | /api/employees/{id}   | Get by ID         |
-| POST   | /api/employees        | Create employee   |
-| PUT    | /api/employees/{id}   | Update employee   |
-| DELETE | /api/employees/{id}   | Delete employee   |
+| Method | Endpoint                      | Description             |
+|--------|-------------------------------|-------------------------|
+| GET    | `/employees`                  | Paginated               |
+| GET    | `/employees/list`             | Flat list               |
+| POST   | `/employees`                  | Create                  |
+| PUT    | `/employees/:id`              | Update                  |
+| DELETE | `/employees/:id`              | Delete                  |
+| PATCH  | `/employees/:id/toggle-status`| Activate/Deactivate     |
+| POST   | `/employees/:id/projects`     | Assign projects         |
 
 ### Tickets
+| Method | Endpoint                      | Description                |
+|--------|-------------------------------|----------------------------|
+| GET    | `/tickets`                    | Paginated + filters        |
+| GET    | `/tickets/:id`                | By ID                      |
+| POST   | `/tickets`                    | Create                     |
+| PUT    | `/tickets/:id`                | Update                     |
+| DELETE | `/tickets/:id`                | Delete                     |
+| PATCH  | `/tickets/:id/assign`         | Assign employee            |
+| PATCH  | `/tickets/:id/status`         | Update status              |
+| GET    | `/tickets/my`                 | Current user's tickets     |
 
-| Method | Endpoint              | Description              |
-|--------|----------------------|--------------------------|
-| GET    | /api/tickets          | Get all (paginated + filtered) |
-| GET    | /api/tickets/{id}     | Get by ID                |
-| POST   | /api/tickets          | Create ticket            |
-| PUT    | /api/tickets/{id}     | Update ticket            |
-| DELETE | /api/tickets/{id}     | Delete ticket            |
+### Dashboard
+| Method | Endpoint                  | Description             |
+|--------|---------------------------|-------------------------|
+| GET    | `/dashboard/stats`        | KPI summary             |
+| GET    | `/dashboard/trends`       | Ticket trend data       |
+| GET    | `/dashboard/performance`  | Employee performance    |
+| GET    | `/dashboard/priority-dist`| Priority distribution   |
 
-**GET /api/tickets Query Parameters:**
+### Shifts
+| Method | Endpoint       | Description |
+|--------|----------------|-------------|
+| GET    | `/shifts`      | All shifts  |
+| POST   | `/shifts`      | Create      |
+| PUT    | `/shifts/:id`  | Update      |
+| DELETE | `/shifts/:id`  | Delete      |
 
-| Param          | Type    | Example         |
-|----------------|---------|-----------------|
-| page           | int     | 0               |
-| size           | int     | 10              |
-| sortBy         | string  | createdAt       |
-| sortDir        | string  | desc / asc      |
-| ticketNumber   | string  | INC-1001        |
-| projectId      | long    | 1               |
-| employeeId     | long    | 2               |
-| priority       | string  | P1 - Critical   |
-| currentStatus  | string  | Open            |
-| supportLevel   | string  | L2              |
+### SLA
+| Method | Endpoint           | Description        |
+|--------|--------------------|--------------------|
+| GET    | `/sla/configs`     | Get SLA configs    |
+| POST   | `/sla/configs`     | Upsert SLA config  |
+| GET    | `/sla/report`      | SLA breach report  |
 
-**Example Request — Create Ticket:**
-```json
-POST /api/tickets
-{
-  "projectId": 1,
-  "issueDescription": "Users unable to access the HR dashboard after recent update.",
-  "assignedEmployeeId": 2,
-  "supportLevel": "L2",
-  "priority": "P2 - High",
-  "currentStatus": "Open",
-  "remarks": "Reported by 5 users"
-}
-```
+### Reports
+| Method | Endpoint               | Description             |
+|--------|------------------------|-------------------------|
+| GET    | `/reports/project`     | Project-wise report     |
+| GET    | `/reports/sla`         | SLA report              |
+| GET    | `/reports/employee`    | Employee performance    |
+| GET    | `/reports/trends`      | Volume trends           |
+| GET    | `/reports/export/:type`| CSV export (Blob)       |
 
-**Example Response:**
-```json
-{
-  "success": true,
-  "message": "Ticket created successfully",
-  "data": {
-    "id": 9,
-    "ticketNumber": "INC-1009",
-    "projectName": "HR Portal",
-    "issueDescription": "Users unable to access...",
-    "currentStatus": "Open",
-    "priority": "P2 - High",
-    "generationDatetime": "2024-01-15T10:30:00",
-    ...
-  }
+---
+
+## 🎨 Theme Customization
+
+All colors are CSS variables in `src/styles.css`. To switch to a light theme or brand colors, override the `:root` block:
+
+```css
+:root {
+  --bg-primary:  #f4f6f9;
+  --bg-card:     #ffffff;
+  --accent:      #4f46e5;   /* your brand color */
+  --text-primary: #111827;
+  /* ... */
 }
 ```
 
 ---
 
-## Application Features
+## 📦 Key Dependencies
 
-### Ticket Entry Form
-- Auto-generated Ticket ID (INC-1001, INC-1002...)
-- Auto-populated generation timestamp (read-only)
-- Response datetime picker with auto-calculated resolution time
-- Conditional validation: Resolution Details required for Resolved/Closed
-- Form reset functionality
-
-### Ticket List Page
-- Paginated table with sorting on all columns
-- 6-field filter bar (Ticket ID, Project, Employee, Priority, Status, Level)
-- Color-coded status badges and priority badges
-- Inline action buttons (View, Edit, Delete)
-
-### Ticket Detail Page
-- Full ticket information display
-- Timeline section with resolution time calculation
-- Edit and Delete actions
-
-### UI Theme
-- Dark navy (#0a0f1e) primary background
-- IBM Plex Sans + IBM Plex Mono typography
-- Blue accent system (#2563eb)
-- Color-coded badges for all statuses and priorities
-- Responsive grid layout
+| Package              | Purpose                           |
+|----------------------|-----------------------------------|
+| `@angular/material`  | UI components (dialog, snackbar)  |
+| `@angular/cdk`       | CDK primitives                    |
+| `chart.js`           | Charts (ready to integrate)       |
+| `rxjs`               | Reactive streams                  |
 
 ---
 
-## Troubleshooting
+## ✅ Features Checklist
 
-**CORS error in browser:**
-Make sure backend is running on port 8080. The CORS config allows `http://localhost:4200`.
-
-**Database connection failed:**
-Check MySQL is running: `mysql -u root -p -e "SELECT 1"`
-Verify credentials in `application.properties`.
-
-**Angular fails to start:**
-Ensure Node 18+ is installed: `node --version`
-Delete `node_modules` and re-run `npm install`.
-
-**Tickets not loading:**
-Open browser DevTools → Network tab — check if API calls to `localhost:8080` succeed.
+- [x] JWT Authentication + refresh token handling
+- [x] Role-based route guards (ADMIN, PM, L1, L2, USER)
+- [x] Project switcher in navbar (signal-based)
+- [x] Project-specific dashboard KPIs
+- [x] Ticket management (create, edit, view, delete, assign, status)
+- [x] Advanced ticket filters (project, priority, status, SLA, date, employee)
+- [x] SLA countdown + breach indicators
+- [x] Business-hours-based resolution time display
+- [x] Configuration module (Projects, Employees, Authorization, Shifts, SLA)
+- [x] Project Authorization mapping (employee ↔ project ↔ role)
+- [x] Shift management with day picker and time inputs
+- [x] SLA per-priority configuration with escalation
+- [x] Reports (trends, SLA, employee performance) with CSV export
+- [x] User profile + password change
+- [x] Responsive sidebar (collapsible, mobile-friendly)
+- [x] Global loading interceptor + progress bar
+- [x] Toast notifications (success, error, warning, info)
+- [x] Empty states + skeleton loaders
+- [x] 403 Forbidden + 404 Not Found error pages
+- [x] Lazy-loaded routes (all feature modules)
+- [x] Angular Signals throughout (auth state, UI state, loading)
+- [x] Standalone components (no NgModules)
+- [x] Full TypeScript typing (strict mode)
+- [x] Enterprise dark theme with CSS variables

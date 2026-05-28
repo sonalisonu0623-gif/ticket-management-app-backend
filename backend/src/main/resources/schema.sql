@@ -112,26 +112,26 @@ CREATE TABLE IF NOT EXISTS sla_config (
 -- ----------------------------------------------------------------------------
 -- 8. Migration: add shift_id column to existing employees table if missing
 -- ----------------------------------------------------------------------------
-ALTER TABLE employees
-    ADD COLUMN IF NOT EXISTS shift_id BIGINT NULL;
+-- ALTER TABLE employees
+--     ADD COLUMN IF NOT EXISTS shift_id BIGINT NULL;
 
--- Add FK only if it doesn't already exist (MySQL 8+ supports IF NOT EXISTS on FK)
--- For safety we use a stored procedure approach
-DROP PROCEDURE IF EXISTS add_shift_fk;
-DELIMITER $$
-CREATE PROCEDURE add_shift_fk()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'employees'
-      AND CONSTRAINT_NAME = 'fk_emp_shift'
-      AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-  ) THEN
-    ALTER TABLE employees
-      ADD CONSTRAINT fk_emp_shift FOREIGN KEY (shift_id) REFERENCES shift_hours(id) ON DELETE SET NULL;
-  END IF;
-END$$
-DELIMITER ;
-CALL add_shift_fk();
-DROP PROCEDURE IF EXISTS add_shift_fk;
+-- -- Add FK only if it doesn't already exist (MySQL 8+ supports IF NOT EXISTS on FK)
+-- -- For safety we use a stored procedure approach
+-- DROP PROCEDURE IF EXISTS add_shift_fk;
+-- DELIMITER $$
+-- CREATE PROCEDURE add_shift_fk()
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+--     WHERE CONSTRAINT_SCHEMA = DATABASE()
+--       AND TABLE_NAME = 'employees'
+--       AND CONSTRAINT_NAME = 'fk_emp_shift'
+--       AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+--   ) THEN
+--     ALTER TABLE employees
+--       ADD CONSTRAINT fk_emp_shift FOREIGN KEY (shift_id) REFERENCES shift_hours(id) ON DELETE SET NULL;
+--   END IF;
+-- END$$
+-- DELIMITER ;
+-- CALL add_shift_fk();
+-- DROP PROCEDURE IF EXISTS add_shift_fk;
